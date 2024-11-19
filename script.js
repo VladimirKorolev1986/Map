@@ -1,15 +1,16 @@
+// Массив для хранения информации о маркерах
 let markersData = [];
 
 // Функция для получения текущих координат
 function getUserLocation() {
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function (position) {
+        navigator.geolocation.getCurrentPosition(function(position) {
             const latitude = position.coords.latitude;
             const longitude = position.coords.longitude;
-
+            
             // Создаем карту с центром на полученных координатах
             createMap(latitude, longitude);
-        }, function (error) {
+        }, function(error) {
             alert('Не удалось получить ваше местоположение.');
         });
     } else {
@@ -30,16 +31,24 @@ function createMap(lat, lng) {
         restoreMarkersFromLocalStorage(myMap);
 
         // Обрабатываем клик по карте для добавления нового маркера
-        myMap.events.add('click', function (e) {
+        myMap.events.add('click', function(e) {
             var coords = e.get('coords');
 
             // Создаем новый маркер
-            var marker = new ymaps.Placemark(coords, {}, {
+            var marker = new ymaps.Placemark(coords, {
+                hintContent: 'Нажмите, чтобы открыть балун',
+                balloonContent: '<strong>Маркер</strong><br/>Координаты: ' + coords.join(', ')
+            }, {
                 preset: 'islands#blueDotIcon'
             });
 
             // Добавляем маркер на карту
             myMap.geoObjects.add(marker);
+
+            // Привязываем событие открытия балуна при клике на маркер
+            marker.events.add('click', function() {
+                this.balloon.open();
+            });
 
             // Сохраняем информацию о новом маркере в массив
             markersData.push({ lat: coords[0].toFixed(6), lng: coords[1].toFixed(6) });
@@ -67,9 +76,17 @@ function restoreMarkersFromLocalStorage(map) {
             for (var i = 0; i < markersData.length; i++) {
                 var marker = new ymaps.Placemark(
                     [markersData[i].lat, markersData[i].lng],
-                    {},
+                    {
+                        hintContent: 'Нажмите, чтобы открыть балун',
+                        balloonContent: '<strong>Восстановленный маркер</strong>'
+                    },
                     { preset: 'islands#blueDotIcon' }
                 );
+
+                // Привязываем открытие балуна к восстановленным маркерам
+                marker.events.add('click', function() {
+                    this.balloon.open();
+                });
 
                 map.geoObjects.add(marker);
             }
